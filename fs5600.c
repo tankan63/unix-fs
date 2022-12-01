@@ -154,7 +154,7 @@ int find_free_inum() {
  *  implement them in other functions.
  */
 
-
+/*
 char** getPathv() {
 	//this can hold upto 10 dir names
 	char** pathv = (char**)malloc(20 * sizeof(char*));
@@ -165,6 +165,7 @@ char** getPathv() {
 
 	return pathv;
 }
+*/
 
 int getPathc(char* path, char** pathv) {
 /*
@@ -791,27 +792,19 @@ int fs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     // get rid of compiling warnings; you should remove later
     (void) uid, (void) gid, (void) cur_time;
 
-    /* your code here */
-
-	int inum = path2inum(path);
-	if (inum > 0) {
-		return -EEXIST;
-	}
-
-	char* file_name = fileName(path);
-	if (strlen(file_name) > 28) {
-		return -EINVAL;
-	}
+    /* your code here */	
 
 	// find parent dir
 	
-	int blk = alloc_blk();
+	//int blk = alloc_blk();
 	//inode_t* inode = (inode_t*)malloc(FS_BLOCK_SIZE);
 
 	char* fullpath = strdup(path);
+	/*
 	char* ptr = strrchr(fullpath, "/");
 	
 	*ptr = '\0';
+	*/
 
 //	printf("\npath: %s\n", fullpath);
 //	printf("filename: %s\n", file_name);
@@ -820,7 +813,8 @@ int fs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	char* pathv[27];
 	int pathc = getPathc(fullpath, pathv);
 	int inum_dir = pathv2inum(pathv, pathc-1);
-	inum = pathv2inum(pathv, pathc);
+	int inum = pathv2inum(pathv, pathc);
+//	if (inum < 0) return -EEXIST;
 		
 	inode_t* parent = (inode_t*)malloc(FS_BLOCK_SIZE);
 	block_read(parent, inum_dir, 1);
@@ -836,15 +830,17 @@ int fs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	inode->ctime = time(NULL);
 	inode->uid = uid;
 	inode->gid = gid;
+	//mode |= S_IFREG;
+	//inode->mode = mode;
 	inode->mode = inode->mode - (inode->mode | S_IFREG) + (mode | S_IFREG);
-	block_write(inode, blk, 1);
+	//block_write(inode, blk, 1);
 
 	int free_inum = find_free_inum();
 	if (free_inum < 0) {
 		return -ENOSPC;
 	}
 	bit_set(bitmap, free_inum);
-	block_write(bitmap, 1, 1);
+	block_write(&bitmap, 1, 1);
 	block_write(inode, free_inum, 1);
 
 	char* pathName = pathv[pathc-1];
@@ -855,7 +851,7 @@ int fs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	};
 
 	memcpy(newDir.name, pathName, strlen(pathName));
-	newDir.name[strlen(pathName)-1] = '\0';
+	newDir.name[strlen(pathName)] = '\0';
 
 	dirent_t finalDir[128];
 	int blknum = parent->ptrs[0];
@@ -930,13 +926,15 @@ int fs_mkdir(const char *path, mode_t mode)
 
     /* your code here */
 
-    	mode = mode | S_IFDIR;
+    //	mode = mode | S_IFDIR;
+    	/*
 	if (!S_ISDIR(mode)) {
 		return -ENOTDIR;
 	}
+	*/
 
 
-	char** pathv = getPathv();
+	char* pathv[27];
 	char* pathName = strdup(path);
 	int pathc = getPathc(pathName, pathv);
 	int inum_dir = pathv2inum(pathv, pathc-1);
