@@ -56,10 +56,6 @@ unsigned char* bitmap;
 inode_t* root_inode;
 dirent_t* root_dir;
 
-char** getPathv();
-int getPathc(char* path, char** pathv);
-int truncatePath(const char* path, char** truncated_path);
-int fs_truncate(const char* path, off_t len);
 
 /*
  * Allocate a free block from the disk.
